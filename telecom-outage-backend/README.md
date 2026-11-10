@@ -52,3 +52,46 @@ BFS follows active directed dependencies from source/upstream to dependent/downs
 - Change CORS allowed origins in `SecurityConfig.java` to the React app's actual origin.
 - Use HTTPS, secret management, and least-privilege IAM on AWS. Do not commit credentials.
 - Python engine, React frontend, Snowflake, Power BI, Docker, AWS VPC/IAM/EC2/S3 and GitHub Actions remain subsequent integration/deployment phases; they are not provisioned by this backend ZIP.
+
+
+## Extended backend endpoints
+
+### Restoration workflow
+- `GET /api/restorations`
+- `GET /api/restorations/{id}`
+- `GET /api/restorations/incident/{incidentId}`
+- `POST /api/restorations` (ADMIN, NOC_MANAGER, NETWORK_ENGINEER)
+- `PATCH /api/restorations/{id}/status` (ADMIN, NOC_MANAGER, NETWORK_ENGINEER)
+
+Example POST body:
+```json
+{
+  "incidentId": 1,
+  "componentId": 1,
+  "actionDescription": "Replaced faulty router power module",
+  "previousStatus": "DOWN",
+  "newStatus": "UP",
+  "restorationStatus": "COMPLETED"
+}
+```
+Creating a restoration entry also updates the selected component's status in the same transaction.
+
+### Administrative table CRUD
+All endpoints below require the `ADMIN` role and a JWT bearer token:
+- `GET /api/admin/data/{table}`
+- `GET /api/admin/data/{table}/{id}`
+- `POST /api/admin/data/{table}`
+- `PUT /api/admin/data/{table}/{id}`
+- `DELETE /api/admin/data/{table}/{id}`
+
+Allowed tables: `roles`, `users`, `components`, `component_dependencies`, `services`,
+`service_components`, `alarms`, `incidents`, `incident_affected_components`,
+`incident_affected_services`, `restoration_history`, `audit_logs`.
+Use database column names in JSON and relationship foreign-key columns such as `component_id`.
+For user creation/update, send `password` (plain text over HTTPS); the API stores a BCrypt hash and never returns `password_hash`.
+The composite-key table `incident_alarms` has dedicated endpoints:
+- `GET /api/admin/incident-alarms`
+- `POST /api/admin/incident-alarms` with `{"incidentId":1,"alarmId":1}`
+- `DELETE /api/admin/incident-alarms/{incidentId}/{alarmId}`
+
+The administrative generic CRUD endpoints are intentionally restricted to ADMIN. They operate against the existing schema and do not create or alter tables.

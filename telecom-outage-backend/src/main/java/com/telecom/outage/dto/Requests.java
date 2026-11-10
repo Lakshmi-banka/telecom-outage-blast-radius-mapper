@@ -6,4 +6,8 @@ public class Requests {
  public record StatusUpdate(@NotBlank String status){}
  public record IncidentCreate(@NotBlank String incidentCode,@NotBlank String title,@NotBlank String severity,@NotNull Long rootComponentId,String description){}
  public record IncidentStatusUpdate(@NotBlank String incidentStatus){}
+ public record RestorationCreate(@NotNull Long incidentId, Long componentId,
+   @NotBlank String actionDescription, String previousStatus,
+   @NotBlank String newStatus, @NotBlank String restorationStatus){}
+ public record RestorationStatusUpdate(@NotBlank String restorationStatus){}
 }
