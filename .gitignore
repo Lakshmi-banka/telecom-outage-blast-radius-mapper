@@ -1,0 +1,32 @@
+
+# Java / Spring Boot
+**/target/
+*.class
+
+# React / Node
+**/node_modules/
+**/dist/
+**/build/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+**/.pytest_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
