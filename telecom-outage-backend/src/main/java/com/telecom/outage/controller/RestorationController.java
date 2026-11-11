@@ -1,7 +1,7 @@
 package com.telecom.outage.controller;
 
 import com.telecom.outage.dto.Requests.RestorationCreate;
-import com.telecom.outage.dto.Requests.RestorationStatusUpdate;
+import com.telecom.outage.dto.Requests.RestorationVerification;
 import com.telecom.outage.service.RestorationService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,9 +29,12 @@ public class RestorationController {
         return service.create(request, authentication.getName());
     }
 
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER','NETWORK_ENGINEER')")
-    public Object updateStatus(@PathVariable Long id, @Valid @RequestBody RestorationStatusUpdate request) {
-        return service.updateStatus(id, request.restorationStatus());
+    @PatchMapping("/{id}/verify")
+    @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER')")
+    public Object verify(@PathVariable Long id, @Valid @RequestBody RestorationVerification request,
+                         org.springframework.security.core.Authentication authentication) {
+        return service.verify(id, request.approved(), request.notes(), authentication.getName());
     }
+
+
 }

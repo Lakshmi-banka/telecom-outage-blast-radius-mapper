@@ -10,4 +10,5 @@ public class Requests {
    @NotBlank String actionDescription, String previousStatus,
    @NotBlank String newStatus, @NotBlank String restorationStatus){}
  public record RestorationStatusUpdate(@NotBlank String restorationStatus){}
+ public record RestorationVerification(@NotNull Boolean approved, String notes){}
 }

@@ -5,4 +5,10 @@ public class IncidentController {private final IncidentService s;private final B
 @GetMapping public Object all(){return s.all();}@GetMapping("/{id}") public Object get(@PathVariable Long id){return s.get(id);}
 @PostMapping @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER','NOC_ANALYST')") public Object create(@Valid @RequestBody IncidentCreate r,Authentication a){return s.create(r,a.getName());}
 @PatchMapping("/{id}/status") @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER')") public Object status(@PathVariable Long id,@Valid @RequestBody IncidentStatusUpdate r){return s.status(id,r.incidentStatus());}
-@PostMapping("/{id}/blast-radius") @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER','NOC_ANALYST')") public Object blast(@PathVariable Long id){return blast.analyze(id);}}
+@PostMapping("/{id}/blast-radius") @PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER','NOC_ANALYST')") public Object blast(@PathVariable Long id){return blast.analyze(id);}
+@PostMapping("/{id}/blast-radius/dfs")
+@PreAuthorize("hasAnyRole('ADMIN','NOC_MANAGER','NOC_ANALYST')")
+public Object analyzeDfs(@PathVariable Long id) {
+    return blast.analyzeDfs(id);
+}
+}
