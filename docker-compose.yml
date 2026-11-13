@@ -1,0 +1,134 @@
+
+services:
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:18
+    container_name: telecom-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "127.0.0.1:15432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init/telecom_deployment_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - telecom-network
+
+
+  # Python FastAPI Engine
+  python-engine:
+    build:
+      context: ./python-engine
+      dockerfile: Dockerfile
+
+    image: telecom-python-engine:latest
+    container_name: telecom-python-engine
+    restart: unless-stopped
+
+    ports:
+      - "18001:8001"
+
+    networks:
+      - telecom-network
+
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./telecom-outage-backend
+      dockerfile: Dockerfile
+
+    image: telecom-backend:latest
+    container_name: telecom-backend
+    restart: unless-stopped
+
+    ports:
+      - "18080:8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      PYTHON_ENGINE_BASE_URL: http://python-engine:8001
+      PYTHON_ENGINE_API_KEY: ${PYTHON_ENGINE_API_KEY}
+
+      JWT_SECRET: ${JWT_SECRET}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      python-engine:
+        condition: service_started
+
+    networks:
+      - telecom-network
+
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./telecom-outage-frontend
+      dockerfile: Dockerfile
+
+    image: telecom-frontend:latest
+    container_name: telecom-frontend
+    restart: unless-stopped
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+    networks:
+      - telecom-network
+
+
+  # Periodic Failure Simulator
+  failure-simulator:
+    image: telecom-python-engine:latest
+    container_name: telecom-failure-simulator
+    restart: unless-stopped
+
+    command: ["python", "scripts/periodic_failure_simulator.py"]
+
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD_URLENCODED}@postgres:5432/${POSTGRES_DB}
+      SIMULATION_ENABLED: "true"
+      SIMULATION_INTERVAL_SECONDS: "300"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - telecom-network
+
+    profiles:
+      - simulation
+
+
+# Persistent Storage
+volumes:
+  postgres_data:
+
+
+# Docker Network
+networks:
+  telecom-network:
+    driver: bridge
